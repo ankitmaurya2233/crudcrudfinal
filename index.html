@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>User Registration Form</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <style>
+    body {
+      background-image: url(''); /* Initially empty */
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container mt-5">
+    <h2>User Registration Form</h2>
+    <form id="registrationForm">
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <label for="firstName">First Name:</label>
+          <input type="text" class="form-control" id="firstName" required>
+        </div>
+        <div class="form-group col-md-6">
+          <label for="lastName">Last Name:</label>
+          <input type="text" class="form-control" id="lastName" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" class="form-control" id="email" required>
+      </div>
+      <div class="form-group">
+        <label for="contactNumber">Contact Number:</label>
+        <input type="tel" class="form-control" id="contactNumber" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+
+    <h2>Registered Users</h2>
+    <ul id="userList"></ul>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+
+  <script>
+    const apiUrl = 'https://crudcrud.com/api/7829521f0e8e44e288069cc3377c574a/users';
+
+    function displayUsers() {
+      var userListElement = document.getElementById('userList');
+      userListElement.innerHTML = '';
+
+      // Retrieve existing user data from the cloud
+      axios.get(apiUrl)
+        .then(response => {
+          var users = response.data;
+
+          // Display each user in the list
+          users.forEach(function(user, index) {
+            var listItem = document.createElement('li');
+            listItem.textContent = user.firstName + ' ' + user.lastName + ' - ' + user.email + ' - ' + user.contactNumber;
+
+            // Create edit button for each user
+            var editButton = document.createElement('button');
+            editButton.textContent = 'Edit';
+            editButton.className = 'btn btn-primary btn-sm ml-2';
+            editButton.addEventListener('click', function() {
+              editUser(index, user);
+            });
+
+            // Create delete button for each user
+            var deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.className = 'btn btn-danger btn-sm ml-2';
+            deleteButton.addEventListener('click', function() {
+              deleteUser(user._id);
+            });
+
+            // Append edit and delete buttons to list item
+            listItem.appendChild(editButton);
+            listItem.appendChild(deleteButton);
+
+            // Append list item to user list
+            userListElement.appendChild(listItem);
+          });
+        })
+        .catch(error => {
+          console.error('Error fetching users:', error);
+        });
+    }
+
+    function editUser(index, user) {
+      var newEmail = prompt('Enter new email:', user.email);
+      if (newEmail !== null) {
+        // Update the user object with the new email
+        user.email = newEmail;
+
+        // Send PUT request to update user data in the cloud
+        axios.put(apiUrl + '/' + user._id, user)
+          .then(response => {
+            displayUsers();
+          })
+          .catch(error => {
+            console.error('Error updating user:', error);
+          });
+      }
+    }
+
+    function deleteUser(userId) {
+      // Send DELETE request to remove user data from the cloud
+      axios.delete(apiUrl + '/' + userId)
+        .then(response => {
+          displayUsers();
+        })
+        .catch(error => {
+          console.error('Error deleting user:', error);
+        });
+    }
+
+    document.getElementById('registrationForm').addEventListener('submit', function(e) {
+      e.preventDefault(); // Prevent form submission
+
+      // Get form values
+      var firstName = document.getElementById('firstName').value;
+      var lastName = document.getElementById('lastName').value;
+      var email = document.getElementById('email').value;
+      var contactNumber = document.getElementById('contactNumber').value;
+
+      // Create user object
+      var user = {
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        contactNumber: contactNumber
+      };
+
+      // Send POST request to add user data to the cloud
+      axios.post(apiUrl, user)
+        .then(response => {
+          // Clear form fields
+          document.getElementById('firstName').value = '';
+          document.getElementById('lastName').value = '';
+          document.getElementById('email').value = '';
+          document.getElementById('contactNumber').value = '';
+
+          displayUsers();
+        })
+        .catch(error => {
+          console.error('Error adding user:', error);
+        });
+    });
+
+    // Display initial users on page load
+    displayUsers();
+  </script>
+</body>
+</html>
